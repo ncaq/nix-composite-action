@@ -1,0 +1,29 @@
+name: ""
+author: ""
+description: ""
+
+branding:
+  icon: "box"
+  color: "blue"
+
+inputs:
+  example:
+    description: Example input
+    required: false
+    default: ""
+
+outputs:
+  example:
+    description: Example output
+    value: ${{ steps.main.outputs.example }}
+
+runs:
+  using: composite
+  steps:
+    - name: Run
+      id: main
+      shell: bash
+      env:
+        EXAMPLE: ${{ inputs.example }}
+      run: |
+        echo "example=$EXAMPLE" >> "$GITHUB_OUTPUT"
