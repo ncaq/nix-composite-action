@@ -9,14 +9,36 @@ Installs Nix and configures
 ## Usage
 
 ```yaml
-steps:
-  - uses: actions/checkout@v6
-    with:
-      persist-credentials: false
-  - uses: ncaq/nix-composite-action@v1
-    with:
-      cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
-  - run: nix flake check
+name: check
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+  merge_group:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nix-flake-check:
+    name: nix-fast-build
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read # リポジトリコンテンツの読み取り
+      id-token: write # niks3 OIDC認証
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - uses: ncaq/nix-composite-action@v1
+        with:
+          cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - run: nix flake check
 ```
 
 ## Inputs
