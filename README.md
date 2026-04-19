@@ -2,9 +2,8 @@
 
 GitHub Composite Action for Nix setup with cache integration.
 
-Install Nix by [install-nix-action](https://github.com/cachix/install-nix-action),
-
-And cache configure:
+Install Nix by [install-nix-action](https://github.com/cachix/install-nix-action)
+and cache configure:
 
 - [cachix](https://github.com/cachix/cachix) by [cachix-action](https://github.com/cachix/cachix-action)
 - [niks3](https://github.com/Mic92/niks3) by [niks3-action](https://github.com/aleadag/niks3-action)
