@@ -1,4 +1,4 @@
-name: Setup Nix
+name: Nix Composite
 author: ncaq
 description: Install Nix and configure caches (Cachix, niks3)
 
