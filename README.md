@@ -31,8 +31,8 @@ jobs:
     name: nix-fast-build
     runs-on: ubuntu-24.04
     permissions:
-      contents: read # リポジトリコンテンツの読み取り
-      id-token: write # niks3 OIDC認証
+      contents: read # read-only access to repository contents
+      id-token: write # required for OIDC authentication with niks3
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v6
