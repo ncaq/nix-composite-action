@@ -27,7 +27,7 @@ concurrency:
 
 jobs:
   nix-flake-check:
-    name: nix-fast-build
+    name: nix-flake-check
     runs-on: ubuntu-24.04
     permissions:
       contents: read # read-only access to repository contents
