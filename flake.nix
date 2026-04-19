@@ -47,7 +47,6 @@
               action-validator = {
                 command = pkgs.action-validator;
                 includes = [
-                  ".github/actions/*/action.yml"
                   ".github/workflows/*.yml"
                   "action.yml"
                 ];
