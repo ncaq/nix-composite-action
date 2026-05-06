@@ -27,7 +27,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - uses: cachix/install-nix-action@ab739621df7a23f52766f9ccc97f38da6b7af14f # v31.10.5
+    - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
       with:
         # セルフホストランナーでうっかり外部からの悪意あるPRを実行許可してしまい、
         # そのままflake.nixの設定を受け入れるとリスクが比較的高いため、
