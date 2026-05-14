@@ -191,7 +191,7 @@ Reviewed-by: Z
   それぞれのフッターは、
   ひとつの単語トークン、
   それに続く`:<space>`か`<space>#`によるセパレータ、
-  そして文字列の値から構成されなければならない(MUST)
+  そして文字列の値から構成されなければならない(MUST)。
   これは[git trailer convention](https://git-scm.com/docs/git-interpret-trailers)に触発されている。
 - フッターのトークンは空白の代わりに`-`を使わなければならない(MUST)。
   例えば`Acked-by`とする。
