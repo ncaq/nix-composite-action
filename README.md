@@ -8,7 +8,7 @@ and cache configure:
 - [cachix](https://github.com/cachix/cachix)
   by [cachix-action](https://github.com/cachix/cachix-action)
 - [niks3](https://github.com/Mic92/niks3)
-  by [niks3-action](https://github.com/aleadag/niks3-action)
+  by [niks3-action](https://github.com/Mic92/niks3-action)
 
 ## Usage
 
@@ -70,9 +70,9 @@ Cache push is automatically skipped for pull requests from forks.
 
 ### niks3
 
-Configured via [aleadag/niks3-action](https://github.com/aleadag/niks3-action)
+Configured via [Mic92/niks3-action](https://github.com/Mic92/niks3-action)
 with OIDC authentication.
-Skipped entirely for fork pull requests to avoid build failures due to missing credentials.
+Cache push is automatically skipped for pull requests from forks.
 
 ## License
 

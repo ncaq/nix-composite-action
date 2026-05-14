@@ -30,11 +30,13 @@ runs:
     - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
       with:
         # セルフホストランナーでうっかり外部からの悪意あるPRを実行許可してしまい、
-        # そのままflake.nixの設定を受け入れるとリスクが比較的高いため、
-        # リスク軽減のためにGitHubホステッドランナーでのみflake.nixの設定を自動で受け入れるようにしています。
+        # そのまま`flake.nix`の設定を受け入れるとリスクが比較的高いため、
+        # リスク軽減のためにGitHubホステッドランナーでのみ、
+        # `flake.nix`の設定を自動で受け入れるようにしています。
+        # GitHubホステッドランナーは荒らされても比較的安全なので受け入れるようにしています。
         # GitHubホステッドランナーでは`runner.environment`は`github-hosted`になります。
         # 仮に値が`github-hosted`にならなくてもキャッシュリストが読み込まれないだけなので、
-        # あまりリスクはありません。
+        # リスクはありません。
         extra_nix_config: |
           ${{ runner.environment == 'github-hosted' && 'accept-flake-config = true' || '' }}
           ${{ inputs.extra-nix-config }}
@@ -45,33 +47,30 @@ runs:
       with:
         name: "${{ inputs.cachix-name }}"
         authToken: "${{ inputs.cachix-auth-token }}"
-        # フォークからのPRのみキャッシュへのプッシュをスキップ。
-        skipPush: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository }}
+        # フォークからのPRはキャッシュへのプッシュをスキップ。
+        skipPush: ${{ github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name != github.repository }}
         # セルフホステッドランナーでは、
-        # デーモンのpost-build-hookではなく、
+        # デーモンの`post-build-hook`ではなく、
         # store scanによるクライアント側pushを使用します。
-        # 通常セルフホステッドランナーではデーモンモードは使用できません。
-        # post-build-hookのパスがデーモンから到達できなかったりするためです。
+        # セルフホステッドランナーではデーモンモードは簡単には動かないからです。
+        # `post-build-hook`のパスがデーモンから到達できなかったりする問題があります。
         # 私のホストしているNixOSコンテナや、
         # 他の場所のUbuntu上のセルフホステッドランナーで、
         # daemonモードを無効化しないと動作しないことを確認しています。
         # store scanモードはクライアント側で単純な差分計算で動作するため、
         # 両環境で問題なく使えます。
         # しかしデーモンモードの方が一般的に効率が良いため、
-        # GitHubホステッドランナーではデーモンモードを使用します。
+        # GitHubホステッドランナーではデフォルトの挙動であるデーモンモードを使用します。
         useDaemon: ${{ runner.environment == 'github-hosted' }}
 
-    # niks3-actionではskip-pushがpost-build hookに反映されないバグがあります。
-    # そしてpush失敗時にビルド全体が巻き込まれて失敗します。
-    # よってsecretが渡らないフォークPRではaction自体をスキップします。
-    # See: https://github.com/aleadag/niks3-action/issues/3
+    # OIDC認証を使うのでsecretは不要です。
+    # セルフホステッドランナーで`trusted-users`に含まれない場合は、
+    # `post-build-hook`ではなく`/nix/store`のスキャンによるpushに自動でフォールバックします。
     - name: Setup niks3 cache
-      if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
-      uses: aleadag/niks3-action@8935c349a257dfc311834684bfbd4ab6c4ce6c86 # v0.5.0
+      uses: Mic92/niks3-action@bc010bf9dbc79ec59de6c79b1e7a167977d3978b # v1.0.0
       with:
-        endpoint: "${{ inputs.niks3-endpoint }}"
-        use-oidc: true
-        push-flake-inputs: true
-        # 通常セルフホステッドランナーではpost-build-hookが動作しないので、
-        # store-scanモードを使用します。
-        use-daemon: ${{ runner.environment == 'github-hosted' }}
+        server-url: "${{ inputs.niks3-endpoint }}"
+        # フォークからのPRはキャッシュへのプッシュをスキップ。
+        skip-push: ${{ github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name != github.repository }}
