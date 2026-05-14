@@ -5,8 +5,10 @@ GitHub Composite Action for Nix setup with cache integration.
 Install Nix by [install-nix-action](https://github.com/cachix/install-nix-action)
 and cache configure:
 
-- [cachix](https://github.com/cachix/cachix) by [cachix-action](https://github.com/cachix/cachix-action)
-- [niks3](https://github.com/Mic92/niks3) by [niks3-action](https://github.com/aleadag/niks3-action)
+- [cachix](https://github.com/cachix/cachix)
+  by [cachix-action](https://github.com/cachix/cachix-action)
+- [niks3](https://github.com/Mic92/niks3)
+  by [niks3-action](https://github.com/aleadag/niks3-action)
 
 ## Usage
 
@@ -45,12 +47,12 @@ jobs:
 
 ## Inputs
 
-| Name                | Description                            | Required | Default                         |
-| ------------------- | -------------------------------------- | -------- | ------------------------------- |
-| `extra-nix-config`  | Additional nix.conf settings to append | No       | `""`                            |
-| `cachix-name`       | Cachix cache name                      | No       | `ncaq`                          |
-| `cachix-auth-token` | Cachix authentication token            | No       | `""`                            |
-| `niks3-endpoint`    | niks3 server endpoint URL              | No       | `https://niks3-public.ncaq.net` |
+| Name                | Description                 | Required | Default                         |
+| ------------------- | --------------------------- | -------- | ------------------------------- |
+| `extra-nix-config`  | Append nix.conf settings    | No       | `""`                            |
+| `cachix-name`       | Cachix cache name           | No       | `ncaq`                          |
+| `cachix-auth-token` | Cachix authentication token | No       | `""`                            |
+| `niks3-endpoint`    | niks3 server endpoint URL   | No       | `https://niks3-public.ncaq.net` |
 
 ## Behavior
 
@@ -68,7 +70,8 @@ Cache push is automatically skipped for pull requests from forks.
 
 ### niks3
 
-Configured via [aleadag/niks3-action](https://github.com/aleadag/niks3-action) with OIDC authentication.
+Configured via [aleadag/niks3-action](https://github.com/aleadag/niks3-action)
+with OIDC authentication.
 Skipped entirely for fork pull requests to avoid build failures due to missing credentials.
 
 ## License

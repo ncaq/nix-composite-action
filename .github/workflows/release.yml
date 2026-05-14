@@ -25,11 +25,12 @@ jobs:
           ref: "${{ github.event.workflow_run.head_sha }}"
           persist-credentials: false
           fetch-depth: 0 # タグの存在確認と作成に全履歴が必要
+      # workflow_runでpathsフィルタは使えないのでジョブ内でのチェックが必要になります。
       - name: Check VERSION changed
         id: changed
         run: |
           set -euo pipefail
-          LAST_TAG=$(git describe --tags --match 'v*' --abbrev=0 2>/dev/null || git rev-list --max-parents=0 HEAD)
+          LAST_TAG=$(git describe --tags --match 'v*' --abbrev=0 || git rev-list --max-parents=0 HEAD)
           if git diff --name-only "$LAST_TAG" HEAD -- VERSION | grep -q VERSION; then
             echo "changed=true" >> "$GITHUB_OUTPUT"
           else
