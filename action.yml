@@ -11,6 +11,13 @@ inputs:
     description: Append nix.conf settings
     required: false
     default: ""
+  use-daemon:
+    description: >-
+      Use nix-daemon post-build-hook to push store paths.
+      Set to false on self-hosted runners where the daemon cannot reach the hook path
+      (e.g. containerized runners without host bind-mount configuration).
+    required: false
+    default: "true"
   cachix-name:
     description: Cachix cache name
     required: false
@@ -50,23 +57,18 @@ runs:
         # フォークからのPRはキャッシュへのプッシュをスキップ。
         skipPush: ${{ github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name != github.repository }}
-        # セルフホステッドランナーでは、
-        # デーモンの`post-build-hook`ではなく、
-        # store scanによるクライアント側pushを使用します。
-        # セルフホステッドランナーではデーモンモードは簡単には動かないからです。
-        # `post-build-hook`のパスがデーモンから到達できなかったりする問題があります。
-        # 私のホストしているNixOSコンテナや、
-        # 他の場所のUbuntu上のセルフホステッドランナーで、
-        # daemonモードを無効化しないと動作しないことを確認しています。
-        # store scanモードはクライアント側で単純な差分計算で動作するため、
-        # 両環境で問題なく使えます。
-        # しかしデーモンモードの方が一般的に効率が良いため、
-        # GitHubホステッドランナーではデフォルトの挙動であるデーモンモードを使用します。
-        useDaemon: ${{ runner.environment == 'github-hosted' }}
+        # デーモンモードの方が効率が良いためデフォルトで有効にします。
+        # セルフホステッドランナーでも、
+        # ホスト側でpost-build-hookのパスを到達可能にすれば動作します。
+        # ただしランナーホストの設定を変更できない特殊なCI環境では、
+        # `use-daemon: false`でstore scanモードに切り替えてください。
+        useDaemon: "${{ inputs.use-daemon }}"
 
     # OIDC認証を使うのでsecretは不要です。
     # セルフホステッドランナーで`trusted-users`に含まれない場合は、
     # `post-build-hook`ではなく`/nix/store`のスキャンによるpushに自動でフォールバックします。
+    # `use-daemon`入力でのデーモンモード明示制御は、
+    # `Mic92/niks3-action`に対応するinputが追加されたら反映する予定です。
     - name: Setup niks3 cache
       uses: Mic92/niks3-action@bc010bf9dbc79ec59de6c79b1e7a167977d3978b # v1.0.0
       with:
