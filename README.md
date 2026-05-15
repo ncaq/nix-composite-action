@@ -50,6 +50,7 @@ jobs:
 | Name                | Description                 | Required | Default                         |
 | ------------------- | --------------------------- | -------- | ------------------------------- |
 | `extra-nix-config`  | Append nix.conf settings    | No       | `""`                            |
+| `use-daemon`        | Use post-build-hook         | No       | `true`                          |
 | `cachix-name`       | Cachix cache name           | No       | `ncaq`                          |
 | `cachix-auth-token` | Cachix authentication token | No       | `""`                            |
 | `niks3-endpoint`    | niks3 server endpoint URL   | No       | `https://niks3-public.ncaq.net` |
@@ -61,6 +62,16 @@ jobs:
 Uses [cachix/install-nix-action](https://github.com/cachix/install-nix-action) to install Nix.
 On GitHub-hosted runners, `accept-flake-config = true` is automatically
 set so that `flake.nix` cache configurations are respected.
+
+### Daemon mode
+
+Both cache pushes default to nix-daemon `post-build-hook` mode for efficiency.
+On self-hosted runners where the daemon cannot reach the hook path
+(e.g. containerized runners whose `${RUNNER_TEMP}` is not visible to the host daemon),
+set `use-daemon: false` to fall back to store scan mode.
+`use-daemon` currently controls Cachix only;
+niks3 falls back to store scan automatically when `trusted-users` excludes the runner,
+and explicit control will be wired up once `Mic92/niks3-action` exposes the option.
 
 ### Cachix
 
