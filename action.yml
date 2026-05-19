@@ -70,7 +70,7 @@ runs:
     # `use-daemon`入力でのデーモンモード明示制御は、
     # `Mic92/niks3-action`に対応するinputが追加されたら反映する予定です。
     - name: Setup niks3 cache
-      uses: Mic92/niks3-action@74d07d8646174756fd49c870b1c26998f4521f81 # v1.0.1
+      uses: Mic92/niks3-action@a3da573cc4d21634990e5f21391abe55ed49ec46 # v1.0.2
       with:
         server-url: "${{ inputs.niks3-endpoint }}"
         # フォークからのPRはキャッシュへのプッシュをスキップ。
