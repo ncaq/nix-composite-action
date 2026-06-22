@@ -7,6 +7,14 @@ branding:
   color: "purple"
 
 inputs:
+  free-disk-space:
+    description: >-
+      Free up disk space by removing pre-installed software on GitHub-hosted Ubuntu runners.
+      Enables only the high-ROI options (fast removals of large directories).
+      The slow apt-based large-packages and the risky tool-cache options are kept disabled.
+      Has no effect on self-hosted or non-Linux runners.
+    required: false
+    default: "true"
   extra-nix-config:
     description: Append nix.conf settings
     required: false
@@ -34,6 +42,28 @@ inputs:
 runs:
   using: composite
   steps:
+    # 空き容量を増やすため、
+    # Nixをインストールする前に不要なプリインストールソフトウェアを削除します。
+    # GitHubホステッドのLinuxランナーでのみ実行します。
+    # 費用対効果の観点から、
+    # 高速かつ大容量を解放できて、
+    # Nixなどによって、
+    # どうせ使わないであろうパッケージを消すオプションのみ有効化します。
+    - name: Free disk space
+      if: >-
+        inputs.free-disk-space == 'true' &&
+        runner.os == 'Linux' &&
+        runner.environment == 'github-hosted'
+      uses: jlumbroso/free-disk-space@54081f138730dfa15788a46383842cd2f914a1be # v1.3.1
+      with:
+        android: true
+        docker-images: false
+        dotnet: true
+        haskell: true
+        large-packages: false
+        swap-storage: false
+        tool-cache: false
+
     - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31.10.6
       with:
         # セルフホストランナーでうっかり外部からの悪意あるPRを実行許可してしまい、
