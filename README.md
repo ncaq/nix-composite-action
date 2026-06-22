@@ -39,7 +39,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: ncaq/nix-composite-action@v1
+      - uses: ncaq/nix-composite-action@v2
         with:
           cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
       - run: nix flake check
@@ -47,15 +47,36 @@ jobs:
 
 ## Inputs
 
-| Name                | Description                 | Required | Default                         |
-| ------------------- | --------------------------- | -------- | ------------------------------- |
-| `extra-nix-config`  | Append nix.conf settings    | No       | `""`                            |
-| `use-daemon`        | Use post-build-hook         | No       | `true`                          |
-| `cachix-name`       | Cachix cache name           | No       | `ncaq`                          |
-| `cachix-auth-token` | Cachix authentication token | No       | `""`                            |
-| `niks3-endpoint`    | niks3 server endpoint URL   | No       | `https://niks3-public.ncaq.net` |
+| Name                | Description                                 | Required | Default                         |
+| ------------------- | ------------------------------------------- | -------- | ------------------------------- |
+| `free-disk-space`   | Free disk space on GitHub-hosted Linux only | No       | `true`                          |
+| `extra-nix-config`  | Append nix.conf settings                    | No       | `""`                            |
+| `use-daemon`        | Use post-build-hook                         | No       | `true`                          |
+| `cachix-name`       | Cachix cache name                           | No       | `ncaq`                          |
+| `cachix-auth-token` | Cachix authentication token                 | No       | `""`                            |
+| `niks3-endpoint`    | niks3 server endpoint URL                   | No       | `https://niks3-public.ncaq.net` |
 
 ## Behavior
+
+### Free disk space
+
+On GitHub-hosted Ubuntu runners,
+[jlumbroso/free-disk-space](https://github.com/jlumbroso/free-disk-space)
+removes pre-installed software
+before Nix installs to enlarge the root partition where `/nix/store` lives.
+
+Only the fast removals of large directories (Android SDK, .NET, Haskell) are enabled by default.
+
+- `docker-images`
+- `large-packages`
+- `swap-storage`
+- `tool-cache`
+
+are kept disabled.
+
+Set `free-disk-space: false` to skip this step.
+
+The step is a no-op on self-hosted or non-Linux runners.
 
 ### Nix installation
 
