@@ -2,14 +2,17 @@
 
 GitHub Composite Action for Nix setup with cache integration.
 
-Install Nix by [install-nix-action](https://github.com/cachix/install-nix-action),
-add [Cachix](https://github.com/cachix/cachix) as a read-only substituter via
-[cachix-action](https://github.com/cachix/cachix-action),
+Install Nix by [install-nix-action](https://github.com/cachix/install-nix-action)
 and push store paths to [niks3](https://github.com/Mic92/niks3)
 via [niks3-action](https://github.com/Mic92/niks3-action).
 
+Read-only substituters such as Cachix are not configured by this action.
+List them in `flake.nix` under `nixConfig.extra-substituters` and
+`nixConfig.extra-trusted-public-keys`, and they will be picked up by the
+Nix daemon thanks to `accept-flake-config = true` on GitHub-hosted runners.
 Writes are concentrated on niks3 because pushing the same store paths to
-multiple caches wastes bandwidth and risks racing on the same artifacts.
+multiple caches wastes bandwidth and risks the Nix daemon racing on the
+same artifacts.
 
 ## Usage
 
@@ -46,12 +49,11 @@ jobs:
 
 ## Inputs
 
-| Name               | Description                                         | Required | Default                         |
-| ------------------ | --------------------------------------------------- | -------- | ------------------------------- |
-| `free-disk-space`  | Free disk space on GitHub-hosted Linux only         | No       | `true`                          |
-| `extra-nix-config` | Append nix.conf settings                            | No       | `""`                            |
-| `cachix-name`      | Cachix cache name to use as a read-only substituter | No       | `ncaq`                          |
-| `niks3-endpoint`   | niks3 server endpoint URL                           | No       | `https://niks3-public.ncaq.net` |
+| Name               | Description                                 | Required | Default                         |
+| ------------------ | ------------------------------------------- | -------- | ------------------------------- |
+| `free-disk-space`  | Free disk space on GitHub-hosted Linux only | No       | `true`                          |
+| `extra-nix-config` | Append nix.conf settings                    | No       | `""`                            |
+| `niks3-endpoint`   | niks3 server endpoint URL                   | No       | `https://niks3-public.ncaq.net` |
 
 ## Behavior
 
@@ -80,14 +82,9 @@ The step is a no-op on self-hosted or non-Linux runners.
 Uses [cachix/install-nix-action](https://github.com/cachix/install-nix-action) to install Nix.
 On GitHub-hosted runners, `accept-flake-config = true` is automatically
 set so that `flake.nix` cache configurations are respected.
-
-### Cachix (read-only)
-
-Configured via [cachix/cachix-action](https://github.com/cachix/cachix-action)
-with `skipPush: true` hard-coded,
-so the cache is added as a substituter for reads only.
-No auth token is required for a public cache.
-Set `cachix-name` to an empty string to skip this step entirely.
+Read-only substituters such as Cachix should be declared in `flake.nix`
+under `nixConfig.extra-substituters` instead of being configured by this action,
+which avoids the cachix-action daemon racing with niks3 over post-build-hook pushes.
 
 ### niks3
 
