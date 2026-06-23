@@ -1,6 +1,6 @@
 name: Nix Composite
 author: ncaq
-description: Install Nix and configure caches (Cachix, niks3)
+description: Install Nix, add Cachix as a read-only substituter, and push to niks3
 
 branding:
   icon: "package"
@@ -19,21 +19,10 @@ inputs:
     description: Append nix.conf settings
     required: false
     default: ""
-  use-daemon:
-    description: >-
-      Use nix-daemon post-build-hook to push store paths.
-      Set to false on self-hosted runners where the daemon cannot reach the hook path
-      (e.g. containerized runners without host bind-mount configuration).
-    required: false
-    default: "true"
   cachix-name:
-    description: Cachix cache name
+    description: Cachix cache name to use as a read-only substituter
     required: false
     default: ncaq
-  cachix-auth-token:
-    description: Cachix authentication token
-    required: false
-    default: ""
   niks3-endpoint:
     description: niks3 server endpoint URL
     required: false
@@ -78,27 +67,19 @@ runs:
           ${{ runner.environment == 'github-hosted' && 'accept-flake-config = true' || '' }}
           ${{ inputs.extra-nix-config }}
 
-    - name: Setup Cachix cache
-      if: inputs.cachix-name != '' && inputs.cachix-auth-token != ''
+    # Cachixはread-onlyのsubstituterとしてのみ追加します。
+    # 同一ストアパスを複数のキャッシュへ同時にpushすると無駄が大きく、
+    # 競合の原因にもなるため、書き込みはniks3に一本化します。
+    - name: Setup Cachix cache (read-only)
+      if: inputs.cachix-name != ''
       uses: cachix/cachix-action@5f2d7c5294214f71b873db4b969586b980625e71 # v17
       with:
         name: "${{ inputs.cachix-name }}"
-        authToken: "${{ inputs.cachix-auth-token }}"
-        # フォークからのPRはキャッシュへのプッシュをスキップ。
-        skipPush: ${{ github.event_name == 'pull_request' &&
-          github.event.pull_request.head.repo.full_name != github.repository }}
-        # デーモンモードの方が効率が良いためデフォルトで有効にします。
-        # セルフホステッドランナーでも、
-        # ホスト側でpost-build-hookのパスを到達可能にすれば動作します。
-        # ただしランナーホストの設定を変更できない特殊なCI環境では、
-        # `use-daemon: false`でstore scanモードに切り替えてください。
-        useDaemon: "${{ inputs.use-daemon }}"
+        skipPush: "true"
 
     # OIDC認証を使うのでsecretは不要です。
     # セルフホステッドランナーで`trusted-users`に含まれない場合は、
     # `post-build-hook`ではなく`/nix/store`のスキャンによるpushに自動でフォールバックします。
-    # `use-daemon`入力でのデーモンモード明示制御は、
-    # `Mic92/niks3-action`に対応するinputが追加されたら反映する予定です。
     - name: Setup niks3 cache
       uses: Mic92/niks3-action@a3da573cc4d21634990e5f21391abe55ed49ec46 # v1.0.2
       with:
