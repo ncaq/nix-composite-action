@@ -2,13 +2,14 @@
 
 GitHub Composite Action for Nix setup with cache integration.
 
-Install Nix by [install-nix-action](https://github.com/cachix/install-nix-action)
-and cache configure:
+Install Nix by [install-nix-action](https://github.com/cachix/install-nix-action),
+add [Cachix](https://github.com/cachix/cachix) as a read-only substituter via
+[cachix-action](https://github.com/cachix/cachix-action),
+and push store paths to [niks3](https://github.com/Mic92/niks3)
+via [niks3-action](https://github.com/Mic92/niks3-action).
 
-- [cachix](https://github.com/cachix/cachix)
-  by [cachix-action](https://github.com/cachix/cachix-action)
-- [niks3](https://github.com/Mic92/niks3)
-  by [niks3-action](https://github.com/Mic92/niks3-action)
+Writes are concentrated on niks3 because pushing the same store paths to
+multiple caches wastes bandwidth and risks racing on the same artifacts.
 
 ## Usage
 
@@ -39,22 +40,18 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-      - uses: ncaq/nix-composite-action@v2
-        with:
-          cachix-auth-token: "${{ secrets.CACHIX_AUTH_TOKEN }}"
+      - uses: ncaq/nix-composite-action@v3
       - run: nix flake check
 ```
 
 ## Inputs
 
-| Name                | Description                                 | Required | Default                         |
-| ------------------- | ------------------------------------------- | -------- | ------------------------------- |
-| `free-disk-space`   | Free disk space on GitHub-hosted Linux only | No       | `true`                          |
-| `extra-nix-config`  | Append nix.conf settings                    | No       | `""`                            |
-| `use-daemon`        | Use post-build-hook                         | No       | `true`                          |
-| `cachix-name`       | Cachix cache name                           | No       | `ncaq`                          |
-| `cachix-auth-token` | Cachix authentication token                 | No       | `""`                            |
-| `niks3-endpoint`    | niks3 server endpoint URL                   | No       | `https://niks3-public.ncaq.net` |
+| Name               | Description                                         | Required | Default                         |
+| ------------------ | --------------------------------------------------- | -------- | ------------------------------- |
+| `free-disk-space`  | Free disk space on GitHub-hosted Linux only         | No       | `true`                          |
+| `extra-nix-config` | Append nix.conf settings                            | No       | `""`                            |
+| `cachix-name`      | Cachix cache name to use as a read-only substituter | No       | `ncaq`                          |
+| `niks3-endpoint`   | niks3 server endpoint URL                           | No       | `https://niks3-public.ncaq.net` |
 
 ## Behavior
 
@@ -84,26 +81,22 @@ Uses [cachix/install-nix-action](https://github.com/cachix/install-nix-action) t
 On GitHub-hosted runners, `accept-flake-config = true` is automatically
 set so that `flake.nix` cache configurations are respected.
 
-### Daemon mode
+### Cachix (read-only)
 
-Both cache pushes default to nix-daemon `post-build-hook` mode for efficiency.
-On self-hosted runners where the daemon cannot reach the hook path
-(e.g. containerized runners whose `${RUNNER_TEMP}` is not visible to the host daemon),
-set `use-daemon: false` to fall back to store scan mode.
-`use-daemon` currently controls Cachix only;
-niks3 falls back to store scan automatically when `trusted-users` excludes the runner,
-and explicit control will be wired up once `Mic92/niks3-action` exposes the option.
-
-### Cachix
-
-Configured via [cachix/cachix-action](https://github.com/cachix/cachix-action).
-Requires both `cachix-name` and `cachix-auth-token` to be set.
-Cache push is automatically skipped for pull requests from forks.
+Configured via [cachix/cachix-action](https://github.com/cachix/cachix-action)
+with `skipPush: true` hard-coded,
+so the cache is added as a substituter for reads only.
+No auth token is required for a public cache.
+Set `cachix-name` to an empty string to skip this step entirely.
 
 ### niks3
 
 Configured via [Mic92/niks3-action](https://github.com/Mic92/niks3-action)
 with OIDC authentication.
+This is the only writable cache.
+On self-hosted runners where the daemon cannot reach the hook path,
+niks3 falls back to store scan automatically
+when `trusted-users` excludes the runner.
 Cache push is automatically skipped for pull requests from forks.
 
 ## License
