@@ -67,7 +67,7 @@ runs:
     # セルフホステッドランナーで`trusted-users`に含まれない場合は、
     # `post-build-hook`ではなく`/nix/store`のスキャンによるpushに自動でフォールバックします。
     - name: Setup niks3 cache
-      uses: Mic92/niks3-action@a3da573cc4d21634990e5f21391abe55ed49ec46 # v1.0.2
+      uses: Mic92/niks3-action@5e2abb3cfc970ffe49a117bc761bca8eefadd17f # v1.0.3
       with:
         server-url: "${{ inputs.niks3-endpoint }}"
         # フォークからのPRはキャッシュへのプッシュをスキップ。
