@@ -23,6 +23,13 @@ inputs:
     description: niks3 server endpoint URL
     required: false
     default: "https://niks3-public.ncaq.net"
+  niks3-drain-timeout:
+    description: >-
+      Seconds the post step waits for the niks3 upload daemon to finish uploading.
+      Raised from the upstream default of 600 because timeouts happen on heavy builds,
+      where losing the cache costs far more than spending extra minutes on the upload.
+    required: false
+    default: "3600"
 
 runs:
   using: composite
@@ -73,3 +80,8 @@ runs:
         # フォークからのPRはキャッシュへのプッシュをスキップ。
         skip-push: ${{ github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name != github.repository }}
+        # アップロードが終わらないうちにデーモンを殺すとキャッシュが欠落します。
+        # 重いビルドほどアップロード量が多くてタイムアウトしやすく、
+        # そしてそういうビルドほどキャッシュが欠落した時の再ビルドコストが高いため、
+        # 上流のデフォルトより大幅に長く待ちます。
+        drain-timeout: "${{ inputs.niks3-drain-timeout }}"

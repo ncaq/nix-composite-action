@@ -49,11 +49,12 @@ jobs:
 
 ## Inputs
 
-| Name               | Description                                 | Required | Default                         |
-| ------------------ | ------------------------------------------- | -------- | ------------------------------- |
-| `free-disk-space`  | Free disk space on GitHub-hosted Linux only | No       | `true`                          |
-| `extra-nix-config` | Append nix.conf settings                    | No       | `""`                            |
-| `niks3-endpoint`   | niks3 server endpoint URL                   | No       | `https://niks3-public.ncaq.net` |
+| Name                  | Description                                    | Required | Default                         |
+| --------------------- | ---------------------------------------------- | -------- | ------------------------------- |
+| `free-disk-space`     | Free disk space on GitHub-hosted Linux only    | No       | `true`                          |
+| `extra-nix-config`    | Append nix.conf settings                       | No       | `""`                            |
+| `niks3-endpoint`      | niks3 server endpoint URL                      | No       | `https://niks3-public.ncaq.net` |
+| `niks3-drain-timeout` | Seconds to wait for the upload daemon to drain | No       | `3600`                          |
 
 ## Behavior
 
@@ -95,6 +96,14 @@ On self-hosted runners where the daemon cannot reach the hook path,
 niks3 falls back to store scan automatically
 when `trusted-users` excludes the runner.
 Cache push is automatically skipped for pull requests from forks.
+
+The post step waits for the upload daemon to drain before the job ends.
+niks3-action defaults to 600 seconds and kills the daemon after that,
+which silently drops every store path still queued.
+Heavy builds produce the most upload work and are therefore the most likely to hit the limit,
+yet they are also the ones whose cache is most expensive to lose,
+so `niks3-drain-timeout` raises the wait to 3600 seconds.
+Lower it if a stuck upload blocking the job for an hour is worse for you than losing the cache.
 
 ## License
 
