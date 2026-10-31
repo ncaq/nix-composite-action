@@ -11,7 +11,7 @@ inputs:
     description: >-
       Free up disk space by removing pre-installed software on GitHub-hosted Ubuntu runners.
       Enables only the high-ROI options (fast removals of large directories).
-      The slow apt-based large-packages and the risky tool-cache options are kept disabled.
+      The slow apt-based large-packages and the risky preinstalled-runtimes options are kept disabled.
       Has no effect on self-hosted or non-Linux runners.
     required: false
     default: "true"
@@ -53,8 +53,8 @@ runs:
         dotnet: true
         haskell: true
         large-packages: false
+        preinstalled-runtimes: false
         swap-storage: false
-        tool-cache: false
 
     - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # 31.11.3
       with:

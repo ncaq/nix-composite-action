@@ -69,8 +69,8 @@ Only the fast removals of large directories (Android SDK, .NET, Haskell) are ena
 
 - `docker-images`
 - `large-packages`
+- `preinstalled-runtimes`
 - `swap-storage`
-- `tool-cache`
 
 are kept disabled.
 
