@@ -40,7 +40,7 @@ jobs:
       id-token: write # required for OIDC authentication with niks3
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - uses: ncaq/nix-composite-action@v3
