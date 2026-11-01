@@ -24,7 +24,8 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
         with:
           persist-credentials: false
-      - uses: ./
+      # actionlintが`$/`構文に未対応なので従来の`./`を使う。https://github.com/rhysd/actionlint/issues/711
+      - uses: ./ # zizmor: ignore[self-repository]
       - run: >-
           nix run '.#nix-fast-build' --
           --option eval-cache false
