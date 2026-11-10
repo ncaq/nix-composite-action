@@ -53,9 +53,20 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ref="$(yq -r '.runs.steps[] | select(.uses // "" | test("^Mic92/niks3-action@")) | .uses | sub("^Mic92/niks3-action@"; "")' action.yml)"
+          ref="$(yq -r '.runs.steps[] | select(.uses // "" | test("(?i)^mic92/niks3-action@")) | .uses | sub("(?i)^mic92/niks3-action@"; "")' action.yml)"
+          # refが空だとGitHub APIはデフォルトブランチの内容を返してしまい、
+          # 固定したコミットとは無関係な値と比較することになるため、
+          # 一意なコミットSHAとして取り出せたことを確認します。
+          if [[ ! "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::failed to extract a unique pinned commit SHA of niks3-action from action.yml: '$ref'"
+            exit 1
+          fi
           expected="$(gh api -H 'Accept: application/vnd.github.raw' "repos/Mic92/niks3-action/contents/NIKS3_VERSION?ref=$ref")"
           expected="${expected#v}"
+          if [[ -z "$expected" ]]; then
+            echo "::error::failed to fetch NIKS3_VERSION of niks3-action@$ref"
+            exit 1
+          fi
           actual="$(nix eval --raw '.#niks3.version')"
           echo "niks3-action@$ref expects niks3 $expected, flake provides $actual"
           if [[ "$expected" != "$actual" ]]; then
