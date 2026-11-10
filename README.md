@@ -97,6 +97,18 @@ niks3 falls back to store scan automatically
 when `trusted-users` excludes the runner.
 Cache push is automatically skipped for pull requests from forks.
 
+The niks3 binary is built from this action's own flake
+(`niks3` from nixpkgs-unstable pinned by `flake.lock`)
+and passed to niks3-action via `niks3-bin`,
+instead of letting niks3-action download it from GitHub release assets,
+which are frequently unavailable.
+It is usually substituted from cache.nixos.org,
+and even a fallback build is cheap since niks3 is written in Go.
+Note that the download is larger than the single release binary,
+because nixpkgs wraps niks3 with Nix on its `PATH`,
+so the closure also includes Nix and its dependencies
+(about 28 MiB compressed, 207 MiB unpacked, mostly substituted from caches).
+
 The post step waits for the upload daemon to drain before the job ends.
 niks3-action defaults to 600 seconds and kills the daemon after that,
 which silently drops every store path still queued.

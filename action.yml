@@ -70,6 +70,24 @@ runs:
           ${{ runner.environment == 'github-hosted' && 'accept-flake-config = true' || '' }}
           ${{ inputs.extra-nix-config }}
 
+    # niks3-actionはデフォルトではGitHubのリリースアセットからniks3を取得しますが、
+    # リリースアセットのサーバは度々ダウンするため、
+    # このアクション自身のflakeからNix経由で取得します。
+    # 大抵はバイナリキャッシュにヒットし、
+    # 最悪ビルドすることになってもGo製なので負荷は軽いです。
+    # セルフホストランナーでジョブ中にGCされないように、
+    # `RUNNER_TEMP`にGCルートを作成します。
+    # `$RUNNER_TEMP/niks3`はniks3-actionが作業ディレクトリとして使うため、
+    # 衝突しない名前にしています。
+    - name: Build niks3
+      id: niks3
+      shell: bash
+      env:
+        ACTION_PATH: ${{ github.action_path }}
+      run: |
+        out="$(nix build --no-update-lock-file --print-out-paths --out-link "$RUNNER_TEMP/nix-composite-action-niks3-gcroot" "$ACTION_PATH#niks3")"
+        echo "bin=$out/bin/niks3" >> "$GITHUB_OUTPUT"
+
     # OIDC認証を使うのでsecretは不要です。
     # セルフホステッドランナーで`trusted-users`に含まれない場合は、
     # `post-build-hook`ではなく`/nix/store`のスキャンによるpushに自動でフォールバックします。
@@ -77,6 +95,7 @@ runs:
       uses: Mic92/niks3-action@6c79855e3e7d8e62ca74234519438a858003abe1 # v1.7.0
       with:
         server-url: "${{ inputs.niks3-endpoint }}"
+        niks3-bin: "${{ steps.niks3.outputs.bin }}"
         # フォークからのPRはキャッシュへのプッシュをスキップ。
         skip-push: ${{ github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name != github.repository }}

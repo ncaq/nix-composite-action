@@ -32,3 +32,44 @@ jobs:
           --no-link
           --skip-cached
           --no-nom
+
+  # niks3-actionは自身が固定するniks3のバージョンを前提に`niks3-hook`の引数を組み立てます。
+  # niks3はflake.lockのnixpkgs-unstableから取得しているため、
+  # niks3-actionとflake.lockのどちらか片方だけが更新されるとバージョンがずれます。
+  # ずれたまま気付かずにリリースしないように、
+  # 両者のバージョンが一致することを検査します。
+  niks3-version:
+    name: niks3-version
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read # リポジトリコンテンツの読み取り
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+      - uses: cachix/install-nix-action@75c75c31ebece974e48ebc36b4ad125bd97bd97b # 31.11.3
+      - name: Compare niks3 version with niks3-action
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ref="$(yq -r '.runs.steps[] | select(.uses // "" | test("(?i)^mic92/niks3-action@")) | .uses | sub("(?i)^mic92/niks3-action@"; "")' action.yml)"
+          # refが空だとGitHub APIはデフォルトブランチの内容を返してしまい、
+          # 固定したコミットとは無関係な値と比較することになるため、
+          # 一意なコミットSHAとして取り出せたことを確認します。
+          if [[ ! "$ref" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "::error::failed to extract a unique pinned commit SHA of niks3-action from action.yml: '$ref'"
+            exit 1
+          fi
+          expected="$(gh api -H 'Accept: application/vnd.github.raw' "repos/Mic92/niks3-action/contents/NIKS3_VERSION?ref=$ref")"
+          expected="${expected#v}"
+          if [[ -z "$expected" ]]; then
+            echo "::error::failed to fetch NIKS3_VERSION of niks3-action@$ref"
+            exit 1
+          fi
+          actual="$(nix eval --raw '.#niks3.version')"
+          echo "niks3-action@$ref expects niks3 $expected, flake provides $actual"
+          if [[ "$expected" != "$actual" ]]; then
+            echo "::error::niks3 version mismatch: niks3-action expects $expected but flake provides $actual"
+            exit 1
+          fi
