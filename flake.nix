@@ -1,6 +1,9 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
+    # niks3-actionが要求する`niks3-hook`を含む新しいniks3は安定版にはまだ無いため、
+    # niks3だけはunstableから取得します。
+    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
@@ -10,6 +13,7 @@
 
   outputs =
     inputs@{
+      nixpkgs-unstable,
       flake-parts,
       treefmt-nix,
       ...
@@ -17,6 +21,13 @@
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         treefmt-nix.flakeModule
+        {
+          perSystem =
+            { system, ... }:
+            {
+              _module.args.pkgs-unstable = nixpkgs-unstable.legacyPackages.${system};
+            };
+        }
       ];
 
       systems = [
@@ -27,6 +38,7 @@
       perSystem =
         {
           pkgs,
+          pkgs-unstable,
           ...
         }:
         {
@@ -63,6 +75,12 @@
             # flake.lockの管理バージョンをre-exportすることで安定した利用を促進。
             inherit (pkgs)
               nix-fast-build
+              ;
+            # action.ymlから参照します。
+            # GitHubのリリースアセットサーバは度々ダウンするため、
+            # niks3-actionにリリースアセットをダウンロードさせずにNix経由で取得します。
+            inherit (pkgs-unstable)
+              niks3
               ;
           };
 
