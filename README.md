@@ -104,6 +104,10 @@ instead of letting niks3-action download it from GitHub release assets,
 which are frequently unavailable.
 It is usually substituted from cache.nixos.org,
 and even a fallback build is cheap since niks3 is written in Go.
+Note that the download is larger than the single release binary,
+because nixpkgs wraps niks3 with Nix on its `PATH`,
+so the closure also includes Nix and its dependencies
+(about 28 MiB compressed, 207 MiB unpacked, mostly substituted from caches).
 
 The post step waits for the upload daemon to drain before the job ends.
 niks3-action defaults to 600 seconds and kills the daemon after that,
