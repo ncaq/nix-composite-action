@@ -15,7 +15,16 @@ concurrency:
 jobs:
   nix-fast-build:
     name: nix-fast-build
-    runs-on: ubuntu-24.04
+    # アクション自体の動作をプラットフォームごとに検証するため、
+    # flake.nixの`systems`に対応するランナーで実行します。
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-24.04 # x86_64-linux
+          - ubuntu-24.04-arm # aarch64-linux
+          - macos-15 # aarch64-darwin
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: read # リポジトリコンテンツの読み取り
       id-token: write # niks3 OIDC認証
