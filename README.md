@@ -34,7 +34,7 @@ concurrency:
 jobs:
   nix-flake-check:
     name: nix-flake-check
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-26.04
     permissions:
       contents: read # read-only access to repository contents
       id-token: write # required for OIDC authentication with niks3
