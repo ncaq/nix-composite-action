@@ -43,7 +43,7 @@
             type = "github";
             owner = "Mic92";
             repo = "niks3";
-            rev = "95b8da7c3ef54b911c1fdea858feca310d7221ec"; # v1.18.0
+            rev = "3a0b84e4f909726de179b9f210e1ed1e56767b2e"; # v1.19.0
           };
           niks3-packages = import "${niks3-src}/nix/packages" { inherit pkgs; };
         in
