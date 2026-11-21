@@ -1,9 +1,6 @@
 {
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-26.05";
-    # niks3-actionが要求する`niks3-hook`を含む新しいniks3は安定版にはまだ無いため、
-    # niks3だけはunstableから取得します。
-    nixpkgs-unstable.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-parts.url = "github:hercules-ci/flake-parts";
     treefmt-nix = {
       url = "github:numtide/treefmt-nix";
@@ -13,7 +10,6 @@
 
   outputs =
     inputs@{
-      nixpkgs-unstable,
       flake-parts,
       treefmt-nix,
       ...
@@ -21,13 +17,6 @@
     flake-parts.lib.mkFlake { inherit inputs; } {
       imports = [
         treefmt-nix.flakeModule
-        {
-          perSystem =
-            { system, ... }:
-            {
-              _module.args.pkgs-unstable = nixpkgs-unstable.legacyPackages.${system};
-            };
-        }
       ];
 
       systems = [
@@ -39,9 +28,25 @@
       perSystem =
         {
           pkgs,
-          pkgs-unstable,
           ...
         }:
+        let
+          # niks3-actionは自身が固定するniks3のバージョンを前提に動作しますが、
+          # nixpkgsのniks3は上流のリリースに追従するまで時間がかかるため、
+          # 上流のリポジトリから直接取得します。
+          # flake inputではなく`fetchTree`でコミットを固定しているのは、
+          # Renovateのnixマネージャがflake inputのタグを書き換えられないためです。
+          # `rev`とその後ろのタグのコメントは、
+          # renovate.jsonのカスタムマネージャがniks3-actionと同時に更新します。
+          # 行の形式を変える時はrenovate.jsonの正規表現も合わせてください。
+          niks3-src = builtins.fetchTree {
+            type = "github";
+            owner = "Mic92";
+            repo = "niks3";
+            rev = "1d40c4a0730ad3d19bec74058606bf6b5c72daf7"; # v1.16.1
+          };
+          niks3-packages = import "${niks3-src}/nix/packages" { inherit pkgs; };
+        in
         {
           treefmt.config = {
             projectRootFile = "flake.nix";
@@ -80,9 +85,17 @@
             # action.ymlから参照します。
             # GitHubのリリースアセットサーバは度々ダウンするため、
             # niks3-actionにリリースアセットをダウンロードさせずにNix経由で取得します。
-            inherit (pkgs-unstable)
-              niks3
-              ;
+            # niks3-actionは`niks3`と同じディレクトリにある`niks3-hook`を起動しますが、
+            # 上流では別々のパッケージなので1つにまとめます。
+            niks3 = pkgs.symlinkJoin {
+              pname = "niks3";
+              inherit (niks3-packages.niks3) version;
+              paths = [
+                niks3-packages.niks3
+                niks3-packages.niks3-hook
+              ];
+              meta.mainProgram = "niks3";
+            };
           };
 
           devShells.default = pkgs.mkShell {

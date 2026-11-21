@@ -98,16 +98,20 @@ when `trusted-users` excludes the runner.
 Cache push is automatically skipped for pull requests from forks.
 
 The niks3 binary is built from this action's own flake
-(`niks3` from nixpkgs-unstable pinned by `flake.lock`)
 and passed to niks3-action via `niks3-bin`,
 instead of letting niks3-action download it from GitHub release assets,
 which are frequently unavailable.
-It is usually substituted from cache.nixos.org,
-and even a fallback build is cheap since niks3 is written in Go.
-Note that the download is larger than the single release binary,
-because nixpkgs wraps niks3 with Nix on its `PATH`,
-so the closure also includes Nix and its dependencies
-(about 28 MiB compressed, 207 MiB unpacked, mostly substituted from caches).
+The flake builds niks3 from the upstream repository
+at the commit of the release that the pinned niks3-action expects,
+because nixpkgs lags behind the upstream releases.
+Renovate updates niks3-action and the pinned niks3 commit in the same pull request.
+The build is usually substituted from `https://niks3-public.ncaq.net`,
+which is listed in `nixConfig` of this action's flake
+and populated by the CI of this repository.
+The substituter takes effect where the flake config is accepted,
+as on GitHub-hosted runners.
+Elsewhere niks3 is built from source,
+which is cheap since niks3 is written in Go.
 
 The post step waits for the upload daemon to drain before the job ends.
 niks3-action defaults to 600 seconds and kills the daemon after that,

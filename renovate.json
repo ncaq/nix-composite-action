@@ -1,4 +1,29 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["github>ncaq/renovate-config"]
+  "extends": ["github>ncaq/renovate-config"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": [
+        "flake.nixでコミットを固定している上流のniks3を、後ろのコメントのタグと合わせて更新します。",
+        "nixマネージャはflake.lockの更新しか行わずタグを書き換えられないため、カスタムマネージャで扱います。"
+      ],
+      "managerFilePatterns": ["/^flake\\.nix$/"],
+      "matchStrings": [
+        "repo = \"niks3\";\\s+rev = \"(?<currentDigest>[0-9a-f]{40})\"; # (?<currentValue>v\\S+)"
+      ],
+      "depNameTemplate": "Mic92/niks3",
+      "datasourceTemplate": "github-tags"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": [
+        "niks3-actionは自身が固定するniks3のバージョンを前提に動作するため、片方だけが更新されるとバージョンがずれます。",
+        "同じPRで同時に更新されるようにグループ化します。"
+      ],
+      "groupName": "niks3",
+      "matchPackageNames": ["/^mic92\\/niks3(-action)?$/i"]
+    }
+  ]
 }
