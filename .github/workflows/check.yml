@@ -43,9 +43,10 @@ jobs:
           --no-nom
 
   # niks3-actionは自身が固定するniks3のバージョンを前提に`niks3-hook`の引数を組み立てます。
-  # niks3はflake.lockのnixpkgs-unstableから取得しているため、
-  # niks3-actionとflake.lockのどちらか片方だけが更新されるとバージョンがずれます。
-  # ずれたまま気付かずにリリースしないように、
+  # niks3はflake.nixで固定した上流のコミットから取得しているため、
+  # niks3-actionとflake.nixのどちらか片方だけが更新されるとバージョンがずれます。
+  # Renovateは両者を同じPRで更新するようにグループ化していますが、
+  # 上流のリリースが対応しない場合などにずれたまま気付かずにリリースしないように、
   # 両者のバージョンが一致することを検査します。
   niks3-version:
     name: niks3-version
