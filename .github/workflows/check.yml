@@ -41,22 +41,51 @@ jobs:
       # 後続のビルドでもローカルに既にあるniks3は再ビルドされないためフックは発火しません。
       # アクションの利用者がniks3をキャッシュから取得できるように、
       # このリポジトリのCIでだけ明示的にフックを呼び出してpushします。
-      # フォークからのPRなどpushしない場合は`post-build-hook`が設定されないためスキップします。
+      # フォークからのPRはアクションがpushをスキップするため、このステップもスキップします。
+      # それ以外で`post-build-hook`が設定されていないのは設定漏れなので失敗させます。
       - name: Push niks3 to cache
+        id: push-niks3
+        if: >-
+          github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository
         run: |
           hook="$(nix config show post-build-hook)"
           if [[ -z "$hook" ]]; then
-            echo "post-build-hook is not set, skip pushing niks3"
-            exit 0
+            echo "::error::post-build-hook is not set although this job should push to the cache"
+            exit 1
           fi
           out="$(nix build --no-update-lock-file --no-link --print-out-paths '.#niks3')"
           OUT_PATHS="$out" "$hook"
+          echo "out=$out" >> "$GITHUB_OUTPUT"
       - run: >-
           nix run '.#nix-fast-build' --
           --option eval-cache false
           --no-link
           --skip-cached
           --no-nom
+      # フックはアップロードデーモンのキューに積むだけなので、
+      # niks3が実際にキャッシュに届いたことを検証します。
+      # デーモンはキューに積まれるとすぐにアップロードを始めますが、
+      # 完了を待つのはジョブの最後のpostステップなので、
+      # この時点ではまだ終わっていない可能性があります。
+      # そのため届くまでしばらくリトライします。
+      # Nixは存在しないという結果をキャッシュするため、
+      # リトライが意味を持つように`narinfo-cache-negative-ttl`を0にします。
+      - name: Check niks3 is in cache
+        if: >-
+          github.event_name != 'pull_request' ||
+          github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          NIKS3_OUT: ${{ steps.push-niks3.outputs.out }}
+        run: |
+          for _ in {1..30}; do
+            if nix path-info --option narinfo-cache-negative-ttl 0 --store 'https://niks3-public.ncaq.net' "$NIKS3_OUT"; then
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::niks3 is not in the cache: $NIKS3_OUT"
+          exit 1
 
   # niks3-actionは自身が固定するniks3のバージョンを前提に`niks3-hook`の引数を組み立てます。
   # niks3はflake.nixで固定した上流のコミットから取得しているため、
