@@ -35,6 +35,22 @@ jobs:
           persist-credentials: false
       # actionlintが`$/`構文に未対応なので従来の`./`を使う。https://github.com/rhysd/actionlint/issues/711
       - uses: ./ # zizmor: ignore[self-repository]
+      # アクションはniks3-actionをセットアップする前にniks3をビルドするため、
+      # その時点では`post-build-hook`が設定されておらず、
+      # niks3自身はキャッシュにpushされません。
+      # 後続のビルドでもローカルに既にあるniks3は再ビルドされないためフックは発火しません。
+      # アクションの利用者がniks3をキャッシュから取得できるように、
+      # このリポジトリのCIでだけ明示的にフックを呼び出してpushします。
+      # フォークからのPRなどpushしない場合は`post-build-hook`が設定されないためスキップします。
+      - name: Push niks3 to cache
+        run: |
+          hook="$(nix config show post-build-hook)"
+          if [[ -z "$hook" ]]; then
+            echo "post-build-hook is not set, skip pushing niks3"
+            exit 0
+          fi
+          out="$(nix build --no-link --print-out-paths '.#niks3')"
+          OUT_PATHS="$out" "$hook"
       - run: >-
           nix run '.#nix-fast-build' --
           --option eval-cache false
