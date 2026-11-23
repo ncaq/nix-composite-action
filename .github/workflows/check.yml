@@ -49,7 +49,7 @@ jobs:
             echo "post-build-hook is not set, skip pushing niks3"
             exit 0
           fi
-          out="$(nix build --no-link --print-out-paths '.#niks3')"
+          out="$(nix build --no-update-lock-file --no-link --print-out-paths '.#niks3')"
           OUT_PATHS="$out" "$hook"
       - run: >-
           nix run '.#nix-fast-build' --
